@@ -86,8 +86,6 @@ class OrderOptimizer:
             logging.error(f"Error en priorización: {str(e)}")
             return df
 
-    # ... (El resto de los métodos se mantienen igual)
-
     def optimizar(self, df: pd.DataFrame) -> pd.DataFrame:
         """Optimización con validación de valores numéricos"""
         try:
