@@ -87,7 +87,7 @@ class OrderOptimizer:
             return df
 
     def optimizar(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Optimización con validación de valores numéricos"""
+        """Optimización con pesos ajustados para los 5 pedidos más prioritarios"""
         try:
             if df.empty:
                 return pd.DataFrame()
@@ -96,15 +96,24 @@ class OrderOptimizer:
             df = df.reset_index(drop=True)
             vehiculos = list(self.vehiculos.keys())
             
+            # Filtrar los primeros 5 pedidos priorizados
+            top_5 = df.head(5)
+            
             # Vector de costos con protección contra NaN/inf
             c = []
             for vehiculo in vehiculos:
-                for _, row in df.iterrows():
+                for idx, row in df.iterrows():
                     distancia = self.distancias.get(
                         (row['Almacén_Origen'], row['Zona_Destino']), 50
                     )
                     puntuacion = max(row['Puntuacion_Total'], 0.001)  # Evita división por cero
-                    costo = distancia / puntuacion
+                    
+                    # Ajuste más suave del costo para los 5 pedidos priorizados
+                    if idx in top_5.index:  # Si el pedido está en el top 5
+                        costo = distancia / (puntuacion * 1.1)  # Factor más suave (entre 1 y 1.2)
+                    else:
+                        costo = distancia / (puntuacion * 1.3)  # Factor ligeramente mayor (entre 1.2 y 1.5)
+                    
                     c.append(costo)
             
             # Convertir a array numpy y limpiar valores inválidos
@@ -195,5 +204,6 @@ def main():
         resultados.to_excel("resultados_optimizacion.xlsx", index=False)
     else:
         print("\nNo se encontró solución óptima")
+
 if __name__ == "__main__":
     main()
